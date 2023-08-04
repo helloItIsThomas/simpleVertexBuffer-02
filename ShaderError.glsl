@@ -10,14 +10,15 @@
 #define d_mesh_line 7
 #define d_point 8
 #define d_custom 9
-#define d_primitive d_rectangle
+#define d_primitive d_vertex_buffer
 // </primitive-types>
 
 
-uniform sampler2D p_texture;
+
 layout(origin_upper_left) in vec4 gl_FragCoord;
 
-// <drawer-uniforms(true, false)> (ShadeStyleGLSL.kt)
+uniform sampler2D image;
+// <drawer-uniforms(true, true)> (ShadeStyleGLSL.kt)
             
 layout(shared) uniform ContextBlock {
     uniform mat4 u_modelNormalMatrix;
@@ -30,16 +31,15 @@ layout(shared) uniform ContextBlock {
     uniform vec2 u_viewDimensions;
 };
             
+layout(shared) uniform StyleBlock {
+    uniform vec4 u_fill;
+    uniform vec4 u_stroke;
+    uniform float u_strokeWeight;
+    uniform float[25] u_colorMatrix;
+};
 // </drawer-uniforms>
 in vec3 va_position;
-in vec3 va_normal;
 in vec2 va_texCoord0;
-in vec3 vi_offset;
-in vec2 vi_dimensions;
-in float vi_rotation;
-in vec4 vi_fill;
-in vec4 vi_stroke;
-in float vi_strokeWeight;
 
 
 // <transform-varying-in> (ShadeStyleGLSL.kt)
@@ -53,46 +53,29 @@ flat in mat4 v_modelNormalMatrix;
 
 out vec4 o_color;
 
-
 flat in int v_instance;
-in vec3 v_boundsSize;
-
     // -- fragmentConstants
     int c_instance = v_instance;
-    int c_element = 0;
+    int c_element = v_instance;
     vec2 c_screenPosition = gl_FragCoord.xy / u_contentScale;
     float c_contourPosition = 0.0;
-    vec3 c_boundsPosition = vec3(va_texCoord0, 0.0);
-    vec3 c_boundsSize = v_boundsSize;
-    
+    vec3 c_boundsPosition = vec3(0.0);
+    vec3 c_boundsSize = vec3(0.0);
+
 void main(void) {
-    vec4 x_fill = vi_fill;
-    vec4 x_stroke = vi_stroke;
+    vec4 x_fill = u_fill;
+    vec4 x_stroke = u_stroke;
     {
-        
-                        x_fill.rgb = texture(p_texture, va_texCoord).rgb;
-                    
+       
+                          x_fill = vec3(0.0, 1.0, 0.0);
+                   
     }
-    vec2 wd = fwidth(va_texCoord0 - vec2(0.5));
-    vec2 d = abs((va_texCoord0 - vec2(0.5)) * 2);
+         o_color = x_fill;
+    o_color.rgb *= o_color.a;
 
-    float irx = smoothstep(0.0, wd.x * 2.5, 1.0-d.x - vi_strokeWeight*2.0/vi_dimensions.x);
-    float iry = smoothstep(0.0, wd.y * 2.5, 1.0-d.y - vi_strokeWeight*2.0/vi_dimensions.y);
-    float ir = irx*iry;
-
-    vec4 final = vec4(1.0);
-    final.rgb = x_fill.rgb * x_fill.a;
-    final.a = x_fill.a;
-
-    float sa = (1.0-ir) * x_stroke.a;
-    final.rgb = final.rgb * (1.0-sa) + x_stroke.rgb * sa;
-    final.a = final.a * (1.0-sa) + sa;
-
-       o_color = final;
-}
-// -------------
-// shade-style-custom:rectangle--1784352778
-// created 2023-08-03T18:24:34.699764
+}// -------------
+// shade-style-custom:vertex-buffer-864020591
+// created 2023-08-03T19:40:21.313217
 /*
-ERROR: 0:73: Use of undeclared identifier 'va_texCoord'
+ERROR: 0:70: Incompatible types (vec4 and vec3) in assignment (and no available implicit conversion)
 */
